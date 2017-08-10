@@ -9,7 +9,7 @@ Array.prototype.move = (a, b) => {
 
 const mutationRate = 0.2;
 const populationSize = 50;
-const generations = 1;
+const generations = 2;
 const mortalityRate = 0.1;
 const orderLength = data.length;
 
@@ -24,7 +24,12 @@ app.controller('controller', function() {
   vm.test = new Population(data);
   vm.test.sortPopulation();
   console.log(vm.test);
-  console.log(vm.test.evolve());
+  let a = vm.test.pop[0].score;
+
+  // console.log(vm.test);
+  vm.test.evolve();
+  let b = vm.test.pop[0].score;
+  console.log(a, b);
 
 });
 
@@ -80,31 +85,35 @@ class Population {
     //repopulate
     //local var to track first parent
     let firstParent = 0;
-    let counter = 0;
     //while loop to go every other until those killed are replaced
-    while (counter < this.numberToDie) {
+    for (i = 0; i < this.numberToDie; i++) {
       //random number between 1 and order.length*
       const elementsToRemove = Utility.randomNumber(orderLength, 1);
+      console.log('elementsToRemove', elementsToRemove);
       let newOrder = this.pop[firstParent].order;
+      console.log('new order 1', newOrder);
       //ushift that many from the front of order*
-      for (var i = elementsToRemove; i >= 0; i--) {
+      for (var i = elementsToRemove - 1; i >= 0; i--) {
         newOrder.shift();
       }
+      console.log('new order 2', newOrder);
       //loop through pop[firstorder+1]
       for (var i = 0; i < orderLength; i++) {
         //  check if this.order includes each item
-        if (!this.pop[firstParent].order.includes(this.pop[firstParent+1].order[i])) {
+        if (!this.pop[firstParent].order.includes(this.pop[firstParent + 1].order[i])) {
+          console.log('not included');
           //  if not, push into new order
           newOrder.push(this.pop[firstParent+1].order[i]);
         }
       }
+      console.log('new order 3', newOrder);
       //  push new order into pop
       let order = new Order();
       order.order = newOrder;
-      order.calcScore();
+      order.score = order.calcScore();
       this.pop.push(order);
+
       firstParent += 2;
-      counter++;
     }; //end while loop
   }; //end crossover
 
@@ -119,7 +128,6 @@ class Population {
     //death, crossover, mutate, calc scores, sort
     this.death();
     this.crossover();
-    console.log('repopulated', this);
     for (var i = 0; i < this.pop.length; i++) {
       //mutate
       // for (var j = 0; j < this.pop[i].order.length; j++) {
@@ -129,12 +137,10 @@ class Population {
       // }
     }
     this.sortPopulation();
-
   };
 
   evolve() {
     for (var i = 0; i < generations; i++) {
-      console.log('generation', i);
       this.generationCycle();
     }
     return this;
