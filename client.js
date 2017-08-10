@@ -7,10 +7,10 @@ Array.prototype.move = (a, b) => {
   console.log(itemToPlace);
 };
 
-const mutationRate = 0.1;
+const mutationRate = 0.2;
 const populationSize = 50;
-const generations = 200;
-const mortalityRate = 0.25;
+const generations = 1;
+const mortalityRate = 0.1;
 const orderLength = data.length;
 
 //===================================================//
@@ -23,6 +23,9 @@ app.controller('controller', function() {
   let vm = this;
   vm.test = new Population(data);
   vm.test.sortPopulation();
+  console.log(vm.test);
+  console.log(vm.test.evolve());
+
 });
 
 //===================================================//
@@ -55,7 +58,7 @@ class Utility {
 class Population {
   constructor(list) {
     this.pop = this.createPopulation(list);
-    this.numberToDie = Math.floor(populationSize - (populationSize * mortalityRate));
+    this.numberToDie = Math.floor(populationSize * mortalityRate);
   }; //end constructor
 
   createPopulation(list) {
@@ -72,24 +75,34 @@ class Population {
     });
   };
 
+  // pairs off the top order objects in this.pop and mates them
   crossover() {
     //repopulate
     //local var to track first parent
-    //while loop to go every other until those killed are replaced
     let firstParent = 0;
     let counter = 0;
+    //while loop to go every other until those killed are replaced
     while (counter < this.numberToDie) {
-      //////////////////////////////////////////////////////////////////////////////
-      //random number between 1 and order.length
-      //ushift that many from the front of order
-      //loop through order[firstorder+1]
-      //  check if this.order includes each item
-      //  if not, push into new order
+      //random number between 1 and order.length*
+      const elementsToRemove = Utility.randomNumber(orderLength, 1);
+      let newOrder = this.pop[firstParent].order;
+      //ushift that many from the front of order*
+      for (var i = elementsToRemove; i >= 0; i--) {
+        newOrder.shift();
+      }
+      //loop through pop[firstorder+1]
+      for (var i = 0; i < orderLength; i++) {
+        //  check if this.order includes each item
+        if (!this.pop[firstParent].order.includes(this.pop[firstParent+1].order[i])) {
+          //  if not, push into new order
+          newOrder.push(this.pop[firstParent+1].order[i]);
+        }
+      }
       //  push new order into pop
-      Utility.randomNumber(this.pop[])
-
-
-
+      let order = new Order();
+      order.order = newOrder;
+      order.calcScore();
+      this.pop.push(order);
       firstParent += 2;
       counter++;
     }; //end while loop
@@ -99,12 +112,33 @@ class Population {
     for (var i = 0; i < this.numberToDie; i++) {
       this.pop.pop();
     }
-    return this.pop;
+    // return this.pop;
   };
 
   generationCycle() {
-    //mutate, calc scores, sort, death, crossover
+    //death, crossover, mutate, calc scores, sort
+    this.death();
+    this.crossover();
+    console.log('repopulated', this);
+    for (var i = 0; i < this.pop.length; i++) {
+      //mutate
+      // for (var j = 0; j < this.pop[i].order.length; j++) {
+        this.pop[i].mutate();
+        //calcScore
+        this.pop[i].calcScore();
+      // }
+    }
+    this.sortPopulation();
+
   };
+
+  evolve() {
+    for (var i = 0; i < generations; i++) {
+      console.log('generation', i);
+      this.generationCycle();
+    }
+    return this;
+  }
 
 } //end population class
 
@@ -116,10 +150,12 @@ class Population {
 
 class Order {
   constructor(list) {
-    this.order = Utility.arrToStrings(this.generateOrder(list)); //     as strings
-    // this.order = this.generateOrder(list); //                        as objects
+    if (list) {
+      this.order = Utility.arrToStrings(this.generateOrder(list)); //     as strings
+      // this.order = this.generateOrder(list); //                        as objects
+      this.score = this.calcScore();
+    }
     this.mutationRate = mutationRate;
-    this.score = this.calcScore();
   };
 
   generateOrder(list) {
@@ -160,7 +196,6 @@ class Order {
       let x = Utility.randomNumber(this.order.length - 1, 0);
       let y = Utility.randomNumber(this.order.length - 1, 0);
       Utility.move(this.order, x, y);
-      console.log(this.order);
     } //end if theshold was meant
   } //end mutation
 
