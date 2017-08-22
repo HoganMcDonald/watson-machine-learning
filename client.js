@@ -21,66 +21,71 @@ let app = angular.module('app', []);
 
 app.controller('controller', function() {
   let vm = this;
+
+  // create test population
   vm.test = new Population(data);
   vm.test.sortPopulation();
   console.log(vm.test);
-  let a = vm.test.pop[0].score;
 
-  // console.log(vm.test);
+  // run evolution cycle
   vm.test.evolve();
-  let b = vm.test.pop[0].score;
-  console.log(a, b);
 
-});
+}); // end angular controller
 
 //===================================================//
 //                     classes                       //
 //===================================================//
 
 class Utility {
-  //calc random number
+  // generate random number
   static randomNumber(max, min) {
     return Math.floor(Math.random() * (max - min) + min);
-  };
+  }; // end randomNumber
 
+  // move item in array from one position to another
   static move(arr, i, j) {
     arr.splice(j, 0, arr.splice(i, 1)[0]);
     return arr;
-  };
+  }; // end move
 
+  // convert an array of objects into an array of strings
+  // so they behave well with move function
   static arrToStrings(objArr) {
     let arrToReturn = [];
     for (var i = 0; i < objArr.length; i++) {
       arrToReturn.push(JSON.stringify(objArr[i]));
     }
     return arrToReturn;
-  };
+  }; // end arrToStrings
 
-}
+} // end Utility class
+
 
 //population class
-
 class Population {
+  // population constructor - recieves a list of objects
   constructor(list) {
     this.pop = this.createPopulation(list);
-    this.numberToDie = Math.floor(populationSize * mortalityRate);
+    this.numberToDie = Math.floor(populationSize * mortalityRate); // this is the number of order objects that are repopulated each generation
   }; //end constructor
 
+  // creates population of Order objects
   createPopulation(list) {
     let arr = [];
     for (var i = 0; i < populationSize; i++) {
       arr.push(new Order(list));
     }
     return arr;
-  };
+  }; // end createPopulation
 
+  // sorts population by their scores in ascending order
   sortPopulation() {
     this.pop.sort((a, b) => {
       return a.score - b.score;
     });
-  };
+  }; // end sortPopulation
 
-  // pairs off the top order objects in this.pop and mates them
+  // pairs off the top Order objects in this.pop and mates them to repopulate
   crossover() {
     //repopulate
     //local var to track first parent
@@ -112,18 +117,19 @@ class Population {
       order.order = newOrder;
       order.score = order.calcScore();
       this.pop.push(order);
-
       firstParent += 2;
     }; //end while loop
   }; //end crossover
 
+  // kills off Order objects with the highest scores in population (goal is lower score)
   death() {
     for (var i = 0; i < this.numberToDie; i++) {
       this.pop.pop();
     }
     // return this.pop;
-  };
+  }; // end death function
 
+  // runs a single generation cycle
   generationCycle() {
     //death, crossover, mutate, calc scores, sort
     this.death();
@@ -137,8 +143,9 @@ class Population {
       // }
     }
     this.sortPopulation();
-  };
+  }; // end generationCycle
 
+  // runs generationCycle a constant number of times and returns the final results
   evolve() {
     for (var i = 0; i < generations; i++) {
       this.generationCycle();
@@ -148,13 +155,10 @@ class Population {
 
 } //end population class
 
-//sort by score
-//crossover
-//mortalitty
 
-
-
+// Order class
 class Order {
+  // order constructor
   constructor(list) {
     if (list) {
       this.order = Utility.arrToStrings(this.generateOrder(list)); //     as strings
@@ -162,8 +166,9 @@ class Order {
       this.score = this.calcScore();
     }
     this.mutationRate = mutationRate;
-  };
+  }; // end constructor
 
+  // generates a random order. only used for initial population
   generateOrder(list) {
     let arrToReturn = [];
     //create array to store indeces of list
